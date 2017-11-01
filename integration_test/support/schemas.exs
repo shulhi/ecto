@@ -278,3 +278,40 @@ defmodule Ecto.Integration.PostUserCompositePk do
     timestamps()
   end
 end
+
+defmodule Ecto.Integration.Schedule do
+  @moduledoc """
+  This is for the potential bug
+  """
+  use Ecto.Integration.Schema
+
+  schema "schedules" do
+    field :name, :string
+    has_many :shifts, Ecto.Integration.Shift
+  end
+
+  def changeset(%Ecto.Integration.Schedule{} = shift, attrs \\ %{}) do
+    shift
+    |> Ecto.Changeset.cast(attrs, [:name])
+    |> Ecto.Changeset.cast_assoc(:shifts)
+  end
+end
+
+defmodule Ecto.Integration.Shift do
+  @moduledoc """
+  This is for the potential bug
+  """
+  use Ecto.Integration.Schema
+
+  # Shift schema
+  schema "shifts" do
+    field :day_of_the_week, :integer
+    belongs_to :schedule, Ecto.Integration.Schedule, on_replace: :update
+  end
+
+  def changeset(%Ecto.Integration.Shift{} = shift, attrs \\ %{}) do
+    shift
+    |> Ecto.Changeset.cast(attrs, [:day_of_the_week])
+    |> Ecto.Changeset.assoc_constraint(:schedule)
+  end
+end

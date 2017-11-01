@@ -12,6 +12,8 @@ defmodule Ecto.Integration.AssocTest do
   alias Ecto.Integration.PostUser
   alias Ecto.Integration.Comment
   alias Ecto.Integration.Permalink
+  alias Ecto.Integration.Schedule
+  alias Ecto.Integration.Shift
 
   test "has_many assoc" do
     p1 = TestRepo.insert!(%Post{title: "1"})
@@ -666,5 +668,26 @@ defmodule Ecto.Integration.AssocTest do
     [uid1, uid2] = TestRepo.all from(u in User, select: u.id)
     assert uid1 == u1.id
     assert uid2 == u2.id
+  end
+
+  @tag :maybe_bug
+  test "on_replace: :update potential bug" do
+    # Fixture
+    schedule = TestRepo.insert!(%Schedule{name: "Schedule #1"})
+    shift    = TestRepo.insert!(%Shift{day_of_the_week: 2, schedule_id: schedule.id}) |> TestRepo.preload(:schedule)
+
+    new_schedule = TestRepo.insert!(%Schedule{name: "NEW"})
+    shift_attrs = %{"day_of_the_week" => 2}
+
+    {:ok, updated_shift} =
+      shift
+      |> Shift.changeset(shift_attrs)
+      |> Ecto.Changeset.put_assoc(:schedule, new_schedule)
+      |> TestRepo.update()
+
+    assert updated_shift.day_of_the_week == 2  # pass
+    assert updated_shift.schedule.name == new_schedule.name # fail
+    assert updated_shift.schedule_id == new_schedule.id     # fail
+    assert updated_shift.schedule.id == new_schedule.id     # fail
   end
 end

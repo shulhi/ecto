@@ -61,6 +61,15 @@ defmodule Ecto.Integration.Migration do
       add :uuid, :uuid
     end
 
+    create table(:schedules) do
+      add :name, :string
+    end
+
+    create table(:shifts) do
+      add :day_of_the_week, :integer
+      add :schedule_id, references(:schedules)
+    end
+
     create unique_index(:customs, [:uuid])
 
     create table(:customs_customs, primary_key: false) do
